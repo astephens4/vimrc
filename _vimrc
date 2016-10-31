@@ -45,23 +45,37 @@ filetype off                  " required
 
 if has("win32")
     let g:clang_library_path='C:\Program Files (x86)\LLVM\bin\libclang.dll'
+
+    " Plantuml integration
+    let g:plantuml_executable_script='java -jar '.$APPDATA.'\plantuml.jar'
 endif
 
 " set the runtime path to include Vundle and initialize
-set rtp+=%USERPROFILE%/vimfiles/bundle/Vundle.vim/
-call vundle#begin('%USERPROFILE%/vimfiles/bundle/')
-" alternatively, pass a path where Vundle should install plugins
-"call vundle#begin('~/some/path/here')
+set rtp+=$USERPROFILE/vimfiles/bundle/Vundle.vim
+call vundle#begin('$USERPROFILE/vimfiles/bundle/')
 
-" let Vundle manage Vundle, required
-Plugin 'VundleVim/Vundle.vim'
+" ClearCase plugin
+Plugin 'ccase.vim'
 
-" insert plugins here
+" Plantuml integration
+Plugin 'aklt/plantuml-syntax'
+
+" Best window swapper
+Plugin 'wesQ3/vim-windowswap'
+
+" Clang based code completion for C++
 Plugin 'myint/clang-complete'
 
 " All of your Plugins must be added before the following line
 call vundle#end()            " required
 filetype plugin indent on    " required
+
+" Configuration for clang_complete
+let g:clang_library_path='C:\Program Files\LLVM\bin'
+let g:clang_auto_select=1
+let g:clang_complete_macros=1
+let g:clang_complete_patterns=1
+let g:clang_user_options='-I..\inc\'
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => General
@@ -167,6 +181,9 @@ if has("gui_running")
     elseif has("gui_win32")
         set guifont=DejaVu\ Sans\ Mono:h9
     endif
+
+    " When resizing the GUI, make all of the split buffers equal in size
+    au VimResized * wincmd =
 endif
 
 " Set utf8 as standard encoding and en_US as the standard language
@@ -327,12 +344,23 @@ vnoremap    <leader>'   <esc>`<i'<esc>`>la'<esc>
 vnoremap    <leader>"   <esc>`<i"<esc>`>la"<esc>
 vnoremap    <leader>ds  <esc>`<mn`>x`nx
 
+" Extend the line with the last character out to 120 columns
+nnoremap    <leader>ec <end>vy120p<esc>d120\|^<cr>
+
 " Go to the last character in the file
 nnoremap G   G<End>
 
 " Map double click to highlight all occurrences of the word under cursor
 nnoremap <2-LeftMouse>  *#
 inoremap <2-LeftMouse>  <c-o>*<c-o>#
+
+" Insert and append a single character in normal mode
+nnoremap <leader>i  vyphr
+nnoremap <leader>a  vypr
+
+" Mapping to close the preview window while in insert mode
+inoremap <c-q> <esc>:pc<cr>a
+nnoremap <leader>q :pc<cr>
 
 " Delete trailing white space on save, useful for Python and CoffeeScript ;)
 func! DeleteTrailingWS()
@@ -396,6 +424,7 @@ augroup CAndCpp
     autocmd FileType cpp vnoremap <buffer> <localleader>uc :<c-u>execute "'<,'>s!^//!!ge"<cr>:nohlsearch<cr>
     autocmd FileType cpp :iabbrev <buffer> iff if ()<cr>{<cr>}<up><up><end><left>
     autocmd FileType cpp :iabbrev <buffer> fori for (auto i = 0; i <; ++i)<cr>{<cr>}<up><up><end><left><left><left><left><left><left>
+    autocmd FileType cpp :let g:load_doxygen_syntax=1
 augroup END
 
 " Autocmds for Python
