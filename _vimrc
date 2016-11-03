@@ -44,7 +44,8 @@ set nocompatible              " be iMproved, required
 filetype off                  " required
 
 if has("win32")
-    let g:clang_library_path='C:\Program Files (x86)\LLVM\bin\libclang.dll'
+    " Specify the clang installation
+    let g:clang_library_path='C:\Program Files\LLVM\bin\libclang.dll'
 
     " Plantuml integration
     let g:plantuml_executable_script='java -jar '.$APPDATA.'\plantuml.jar'
@@ -185,6 +186,10 @@ if has("gui_running")
     " When resizing the GUI, make all of the split buffers equal in size
     au VimResized * wincmd =
 endif
+
+" Draw a colorful line at column 120
+set colorcolumn=120
+highlight ColorColumn ctermbg=darkgrey guibg=darkgrey
 
 " Set utf8 as standard encoding and en_US as the standard language
 set encoding=utf8
@@ -329,17 +334,18 @@ nnoremap <leader>sv :so $MYVIMRC<cr>
 onoremap wuc :<c-u>normal! bve<cr>
 
 " Surround words with different characters
-nnoremap    <leader>(   mnbi(<esc>ea)<esc>`nl
-nnoremap    <leader>{   mnbi{<esc>ea}<esc>`nl
-nnoremap    <leader>[   mnbi[<esc>ea]<esc>`nl
-nnoremap    <leader><   mnbi<<esc>ea><esc>`nl
-nnoremap    <leader>"   mnbi"<esc>ea"<esc>`nl
-nnoremap    <leader>'   mnbi'<esc>ea'<esc>`nl
-nnoremap    <leader>ds  mnbhxex`nh
+nnoremap    <leader>(   mnBi(<esc>Ea)<esc>`nl
+nnoremap    <leader>{   mnBi{<esc>Ea}<esc>`nl
+nnoremap    <leader>[   mnBi[<esc>Ea]<esc>`nl
+nnoremap    <leader><   mnBi<<esc>Ea><esc>`nl
+nnoremap    <leader>"   mnBi"<esc>Ea"<esc>`nl
+nnoremap    <leader>'   mnBi'<esc>Ea'<esc>`nl
+nnoremap    <leader>ds  mnBhxEx`nh
 
 vnoremap    <leader>(   <esc>`<i(<esc>`>la)<esc>
 vnoremap    <leader>{   <esc>`<i{<esc>`>la}<esc>
 vnoremap    <leader>[   <esc>`<i[<esc>`>la]<esc>
+vnoremap    <leader><   <esc>`<i<<esc>`>la><esc>
 vnoremap    <leader>'   <esc>`<i'<esc>`>la'<esc>
 vnoremap    <leader>"   <esc>`<i"<esc>`>la"<esc>
 vnoremap    <leader>ds  <esc>`<mn`>x`nx
@@ -361,6 +367,9 @@ nnoremap <leader>a  vypr
 " Mapping to close the preview window while in insert mode
 inoremap <c-q> <esc>:pc<cr>a
 nnoremap <leader>q :pc<cr>
+
+" Insert the correctly formatted date in insert mode
+inoremap <F3> <C-R>=strftime("%d-%b-%Y")<CR>
 
 " Delete trailing white space on save, useful for Python and CoffeeScript ;)
 func! DeleteTrailingWS()
