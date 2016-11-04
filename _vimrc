@@ -341,6 +341,12 @@ nnoremap    <leader><   mnBi<<esc>Ea><esc>`nl
 nnoremap    <leader>"   mnBi"<esc>Ea"<esc>`nl
 nnoremap    <leader>'   mnBi'<esc>Ea'<esc>`nl
 nnoremap    <leader>ds  mnBhxEx`nh
+nnoremap    <leader>d)  mnF(ma%x`ax`nh
+nnoremap    <leader>d(  mnf)ma%x`ahx`nl
+nnoremap    <leader>d}  mnF{ma%x`ax`nh
+nnoremap    <leader>d{  mnf}ma%x`ahx`nl
+nnoremap    <leader>d]  mnF[ma%x`ax`nh
+nnoremap    <leader>d[  mnf]ma%x`ahx`nl
 
 vnoremap    <leader>(   <esc>`<i(<esc>`>la)<esc>
 vnoremap    <leader>{   <esc>`<i{<esc>`>la}<esc>
@@ -434,6 +440,10 @@ augroup CAndCpp
     autocmd FileType cpp :iabbrev <buffer> iff if ()<cr>{<cr>}<up><up><end><left>
     autocmd FileType cpp :iabbrev <buffer> fori for (auto i = 0; i <; ++i)<cr>{<cr>}<up><up><end><left><left><left><left><left><left>
     autocmd FileType cpp :let g:load_doxygen_syntax=1
+    autocmd FileType cpp nnoremap <buffer> <localleader>a( mnF&wi(<esc>f)i)<esc>`nl
+    autocmd FileType cpp nnoremap <buffer> <localleader>)a mnf&bea)<esc>F(wi(<esc>`nl
+    autocmd FileType cpp nnoremap <buffer> <localleader>\|( mnF\|wi(<esc>f)i)<esc>`nl
+    autocmd FileType cpp nnoremap <buffer> <localleader>)\| mnf\|bea)<esc>F(wi(<esc>`nl
 augroup END
 
 " Autocmds for Python
