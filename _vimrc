@@ -67,6 +67,9 @@ Plugin 'wesQ3/vim-windowswap'
 " Clang based code completion for C++
 Plugin 'myint/clang-complete'
 
+" Tab completion, for better auto complete
+Plugin 'ervandew/supertab'
+
 " All of your Plugins must be added before the following line
 call vundle#end()            " required
 filetype plugin indent on    " required
@@ -361,6 +364,7 @@ nnoremap    <leader>ec <end>vy120p<esc>d120\|^<cr>
 
 " Go to the last character in the file
 nnoremap G   G<End>
+vnoremap G   G<End>
 
 " Map double click to highlight all occurrences of the word under cursor
 nnoremap <2-LeftMouse>  *#
@@ -433,17 +437,27 @@ set tags=tags;
 " Autocmds for C and C++
 augroup CAndCpp
     autocmd!
+    " Comment a line with \c
     autocmd FileType cpp nnoremap <buffer> <localleader>c 0i//<esc>
+    " Uncomment a line with \uc
     autocmd FileType cpp nnoremap <buffer> <localleader>uc :s!^\(\s*\)//!\1!ge<cr>:nohlsearch<cr>
+    " Comment the lines in a visual selection with \c
     autocmd FileType cpp vnoremap <buffer> <localleader>c :<c-u>execute "'<,'>s!^!//!ge"<cr>:nohlsearch<cr>
+    " UnComment the lines in a visual selection with \uc
     autocmd FileType cpp vnoremap <buffer> <localleader>uc :<c-u>execute "'<,'>s!^//!!ge"<cr>:nohlsearch<cr>
-    autocmd FileType cpp :iabbrev <buffer> iff if ()<cr>{<cr>}<up><up><end><left>
-    autocmd FileType cpp :iabbrev <buffer> fori for (auto i = 0; i <; ++i)<cr>{<cr>}<up><up><end><left><left><left><left><left><left>
-    autocmd FileType cpp :let g:load_doxygen_syntax=1
-    autocmd FileType cpp nnoremap <buffer> <localleader>a( mnF&wi(<esc>f)i)<esc>`nl
-    autocmd FileType cpp nnoremap <buffer> <localleader>)a mnf&bea)<esc>F(wi(<esc>`nl
-    autocmd FileType cpp nnoremap <buffer> <localleader>\|( mnF\|wi(<esc>f)i)<esc>`nl
-    autocmd FileType cpp nnoremap <buffer> <localleader>)\| mnf\|bea)<esc>F(wi(<esc>`nl
+    " Insert an if statement with curly braces when typing iff
+    autocmd FileType cpp inoreabbrev <buffer> iff if ()<cr>{<cr>}<up><up><end><left>
+    " Insert a basic counter based for loop with curly braces by typing fori
+    autocmd FileType cpp inoreabbrev <buffer> fori for (auto i = 0; i <; ++i)<cr>{<cr>}<up><up><end><left><left><left><left><left><left>
+    " Use doxygen syntax highlighting on top of C++ syntax highlighting
+    autocmd FileType cpp let g:load_doxygen_syntax=1
+    " Try to be smart (more like foolish) about wrapping things inside of an if with parens
+    autocmd FileType cpp nnoremap <buffer> <localleader>( mn?[&\|=<>]<cr>wi(<esc>/[;)]$<cr>i)<esc>`nl:noh<cr>
+    " Try to be smart (more like foolish) about wrapping things inside of an if with parens
+    autocmd FileType cpp nnoremap <buffer> <localleader>) mn/[&\|=<>]\<cr>bea)<esc>?[(]<cr>a(<esc>`nl:noh<cr>
+    " Swap the statements on either side of the equals sign
+    " (the qaq and qsq starting the mapping are to clear out the a and s registers, which are used here)
+    autocmd FileType cpp nnoremap <buffer> <localleader>se qaqqsq^"adt=lp"sdt;F=hhp
 augroup END
 
 " Autocmds for Python
@@ -455,3 +469,6 @@ augroup Python
     autocmd FileType python vnoremap <buffer> <localleader>uc :<c-u>execute "'<,'>s!^#!!ge"<cr>:nohlsearch<cr>
     autocmd FileType python :iabbrev <buffer> iff if:<left>
 augroup END
+
+" Finish off with a :noh
+noh
