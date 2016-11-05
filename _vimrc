@@ -43,20 +43,9 @@
 set nocompatible              " be iMproved, required
 filetype off                  " required
 
-if has("win32")
-    " Specify the clang installation
-    let g:clang_library_path='C:\Program Files\LLVM\bin\libclang.dll'
-
-    " Plantuml integration
-    let g:plantuml_executable_script='java -jar '.$APPDATA.'\plantuml.jar'
-endif
-
 " set the runtime path to include Vundle and initialize
 set rtp+=$USERPROFILE/vimfiles/bundle/Vundle.vim
 call vundle#begin('$USERPROFILE/vimfiles/bundle/')
-
-" ClearCase plugin
-Plugin 'ccase.vim'
 
 " Plantuml integration
 Plugin 'aklt/plantuml-syntax'
@@ -74,8 +63,15 @@ Plugin 'ervandew/supertab'
 call vundle#end()            " required
 filetype plugin indent on    " required
 
+if has("win32")
+    " Specify the clang installation
+    let g:clang_library_path='C:\Program Files\LLVM\bin\libclang.dll'
+
+    " Plantuml integration
+    let g:plantuml_executable_script='java -jar '.$APPDATA.'\plantuml.jar'
+endif
+
 " Configuration for clang_complete
-let g:clang_library_path='C:\Program Files\LLVM\bin'
 let g:clang_auto_select=1
 let g:clang_complete_macros=1
 let g:clang_complete_patterns=1
@@ -230,6 +226,9 @@ set ai "Auto indent
 set si "Smart indent
 set wrap "Wrap lines
 
+" Open new vertical splits on the right, because that is better
+set splitright
+
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => Moving around, tabs, windows and buffers
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -295,25 +294,34 @@ nnoremap <c-j> <c-w>j
 nnoremap <c-k> <c-w>k
 nnoremap <c-l> <c-w>l
 
-" Map c-space to include complete
-map <c-space> <c-x><c-i>
+" Map c-space to user defined complete
+inoremap <c-space> <c-x><c-u>
 
 " Useful mappings for managing tabs
-map <leader>tn :tabnew<cr>
-map <leader>to :tabonly<cr>
-map <leader>tc :tabclose<cr>
-map <leader>tm :tabmove
+nnoremap <leader>tn :tabnew<cr>
+nnoremap <leader>to :tabonly<cr>
+nnoremap <leader>tc :tabclose<cr>
+nnoremap <leader>tm :tabmove
 
 " Opens a new tab with the current buffer's path
 " Super useful when editing files in the same directory
-map <leader>te :tabedit <c-r>=expand("%:p:h")<cr>/
+nnoremap <leader>te :tabedit <c-r>=expand("%:p:h")<cr>/
+
+" Close current buffer, switch tabs, and open buffer as vertical split
+func! MoveToNextTab()
+    let bufno = bufnr('%')
+    write
+    close!
+    tabnext
+    execute "vert sb ".bufno
+endfunc
+
+" Open file under cursor in the next tab as a vertical split
+nnoremap <leader>ot <c-w>gf
+nnoremap <leader>ov :vert wincmd f<cr>:call MoveToNextTab()<cr>
 
 " Switch CWD to the directory of the open buffer
-map <leader>cd :cd %:p:h<cr>:pwd<cr>
-
-" Make switching between multiple tabs better
-nnoremap <leader>th :tabp<cr>
-nnoremap <leader>tl :tabn<cr>
+nnoremap <leader>cd :cd %:p:h<cr>:pwd<cr>
 
 " I like the leader w mapping to write
 nnoremap <leader>w :w!<return>
@@ -377,6 +385,9 @@ nnoremap <leader>a  vypr
 " Mapping to close the preview window while in insert mode
 inoremap <c-q> <esc>:pc<cr>a
 nnoremap <leader>q :pc<cr>
+
+" Open file under cursor in a vertical split - replace the default mapping
+nnoremap <c-w>f :vert wincmd f<cr>
 
 " Insert the correctly formatted date in insert mode
 inoremap <F3> <C-R>=strftime("%d-%b-%Y")<CR>
@@ -469,6 +480,96 @@ augroup Python
     autocmd FileType python vnoremap <buffer> <localleader>uc :<c-u>execute "'<,'>s!^#!!ge"<cr>:nohlsearch<cr>
     autocmd FileType python :iabbrev <buffer> iff if:<left>
 augroup END
+
+augroup Xml
+    autocmd!
+    autocmd FileType xml setlocal foldmethod=indent foldlevelstart=999 foldminlines=0
+augroup END
+
+augroup Project
+    autocmd!
+    autocmd BufRead proj_files.txt setlocal foldmethod=indent foldlevelstart=999 foldminlines=0
+    autocmd BufRead proj_files.txt call ReplaceProjWithListing()
+    autocmd BufRead proj_files.txt nnoremap <buffer> <localleader>o :call OpenProjectFile(line("."))<cr>
+    autocmd BufRead proj_files.txt nnoremap <buffer> <localleader>n :call OpenProjectFileInNextTab(line("."))<cr>
+augroup END
+
+" Create a function to try to read a proj_files.txt and print it prettier in the current buffer
+func! DisplayProjectFiles()
+    let projFiles = readfile("./proj_files.txt")
+    let ossep = '/'
+    if has("win32")
+        let ossep = '\\'
+    endif
+
+    let lineNr = 0
+    for myfile in projFiles
+        let parts = split(myfile, ossep)
+        let namePart = parts[-1:]
+        let dirPart = join(parts[:-2], ossep)
+        call append(lineNr, namePart)
+        let lineNr = lineNr + 1
+        call append(lineNr, "\t" . dirPart)
+        let lineNr = lineNr + 1
+    endfor
+    execute "normal! Gdd"
+endfunc
+
+func! ReplaceProjWithListing()
+    let bufNr = bufnr("%")
+    edit ProjectListing
+    execute "normal! ggvG\<end>d"
+    execute "bd ".bufNr
+    call DisplayProjectFiles()
+endfunc
+
+func! OpenProjectFile(lineNr)
+    let ossep = "/"
+    if has("win32")
+        let ossep = "\\"
+    endif
+
+    if a:lineNr%2 == 0
+        let dirName = getline(a:lineNr)
+        let fileName = getline(a:lineNr-1)
+        let dirname = substitute(dirName, "^\s*\(.*\)\s*$", "\1", "")
+        let allTogether = dirName . ossep . fileName
+        execute "tabedit ".allTogether
+    else
+        let dirName = getline(a:lineNr+1)
+        let fileName = getline(a:lineNr)
+        let dirName = substitute(dirName, "[\s*\(.*\)\s*", "\1", "")
+        let allTogether = dirName . ossep . fileName
+        execute "tabedit ".allTogether
+    endif
+endfunc
+
+
+func! OpenProjectFileInNextTab(lineNr)
+    let ossep = "/"
+    if has("win32")
+        let ossep = "\\"
+    endif
+
+    let allTogether = ""
+    if a:lineNr%2 == 0
+        let dirName = getline(a:lineNr)
+        let fileName = getline(a:lineNr-1)
+        let dirname = substitute(dirName, "^\s*\(.*\)\s*$", "\1", "")
+        let allTogether = dirName . ossep . fileName
+    else
+        let dirName = getline(a:lineNr+1)
+        let fileName = getline(a:lineNr)
+        let dirName = substitute(dirName, "[\s*\(.*\)\s*", "\1", "")
+        let allTogether = dirName . ossep . fileName
+    endif
+
+    execute "sp ".allTogether
+    let bufNr = bufnr("%")
+    close
+    tabnext
+    execute "vert sb ".bufNr
+endfunc
 
 " Finish off with a :noh
 noh
