@@ -43,9 +43,20 @@
 set nocompatible              " be iMproved, required
 filetype off                  " required
 
+" Load the clearcase plugin
+let UsingClearCase = 1
+
+" Control bitness
+let NumBits = 32
+
 " set the runtime path to include Vundle and initialize
 set rtp+=$USERPROFILE/vimfiles/bundle/Vundle.vim
 call vundle#begin('$USERPROFILE/vimfiles/bundle/')
+
+" Clearcase plugin, but only on the work computer
+if (UsingClearCase != 0)
+    Plugin 'ccase.vim'
+endif
 
 " Plantuml integration
 Plugin 'aklt/plantuml-syntax'
@@ -54,7 +65,10 @@ Plugin 'aklt/plantuml-syntax'
 Plugin 'wesQ3/vim-windowswap'
 
 " Clang based code completion for C++
-Plugin 'myint/clang-complete'
+Plugin 'Rip-Rip/clang_complete'
+
+" Python autocomplete plugin
+Plugin 'davidhalter/jedi-vim'
 
 " Tab completion, for better auto complete
 Plugin 'ervandew/supertab'
@@ -65,7 +79,11 @@ filetype plugin indent on    " required
 
 if has("win32")
     " Specify the clang installation
-    let g:clang_library_path='C:\Program Files\LLVM\bin\libclang.dll'
+    if NumBits == 32
+        let g:clang_library_path='C:\Program Files (x86)\LLVM\bin\libclang.dll'
+    elseif NumBits == 64
+        let g:clang_library_path='C:\Program Files\LLVM\bin\libclang.dll'
+    endif
 
     " Plantuml integration
     let g:plantuml_executable_script='java -jar '.$APPDATA.'\plantuml.jar'
@@ -75,7 +93,14 @@ endif
 let g:clang_auto_select=1
 let g:clang_complete_macros=1
 let g:clang_complete_patterns=1
-let g:clang_user_options='-I..\inc\'
+let g:clang_complete_copen=1
+let g:clang_user_options='-I..\\inc\\ -std=c++11'
+let g:clang_auto_user_options=".clang_complete"
+" Uncomment in case of emergency
+" let g:clang_debug = 1
+
+" Configuration for supertab
+let g:SuperTabDefaultCompletionType = "<c-x><c-u>"
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => General
@@ -189,12 +214,16 @@ endif
 " Draw a colorful line at column 120
 set colorcolumn=120
 highlight ColorColumn ctermbg=darkgrey guibg=darkgrey
+highlight Pmenu ctermbg=Cyan ctermfg=DarkGrey guibg=Cyan guifg=DarkGrey
+highlight PmenuSel ctermbg=LightGrey ctermfg=Black guibg=LightGrey guifg=Black
+highlight PmenuSbar ctermbg=LightGrey guibg=LightGrey
+highlight PmenuThumb ctermbg=darkgrey guibg=darkgrey
 
 " Set utf8 as standard encoding and en_US as the standard language
 set encoding=utf8
 
-" Use Unix as the standard file type
-set ffs=unix,dos,mac
+" Use DOS as the standard file type
+set ffs=dos,unix,mac
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => Files, backups and undo
@@ -227,7 +256,7 @@ set si "Smart indent
 set wrap "Wrap lines
 
 " Open new vertical splits on the right, because that is better
-set splitright
+"set splitleft
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => Moving around, tabs, windows and buffers
@@ -340,9 +369,11 @@ noremap <leader>k <PageUp>
 " Make a quick edit to my vimrc and reload
 nnoremap <leader>ev :vsp $MYVIMRC<cr>
 nnoremap <leader>sv :so $MYVIMRC<cr>
+nnoremap <leader>tv :tabedit $MYVIMRC<cr>
 
 " Operator to select word under cursor
-onoremap wuc :<c-u>normal! bve<cr>
+onoremap u :<c-u>normal! bve<cr>
+onoremap U :<c-u>normal! BvE<cr>
 
 " Surround words with different characters
 nnoremap    <leader>(   mnBi(<esc>Ea)<esc>`nl
@@ -382,15 +413,23 @@ inoremap <2-LeftMouse>  <c-o>*<c-o>#
 nnoremap <leader>i  vyphr
 nnoremap <leader>a  vypr
 
-" Mapping to close the preview window while in insert mode
-inoremap <c-q> <esc>:pc<cr>a
-nnoremap <leader>q :pc<cr>
+" Mapping to close the preview and quickfix windows
+inoremap <c-q> <esc>:pc<cr>:ccl<cr>a
+nnoremap <leader>q :pc<cr>:ccl<cr>
 
 " Open file under cursor in a vertical split - replace the default mapping
 nnoremap <c-w>f :vert wincmd f<cr>
 
 " Insert the correctly formatted date in insert mode
 inoremap <F3> <C-R>=strftime("%d-%b-%Y")<CR>
+
+" Substitute word under cursor
+nnoremap <leader>s yiw:%s/<c-r>"/
+nnoremap <leader>S yiW:%s/<c-r>"/
+
+" Replace word/WORD under cursor
+nnoremap <leader>r "gyiw"0Plde
+nnoremap <leader>R "gyiW"0PldE
 
 " Delete trailing white space on save, useful for Python and CoffeeScript ;)
 func! DeleteTrailingWS()
@@ -448,6 +487,10 @@ set tags=tags;
 " Autocmds for C and C++
 augroup CAndCpp
     autocmd!
+    " Use doxygen syntax highlighting on top of C++ syntax highlighting
+    autocmd BufReadPre cpp let g:load_doxygen_syntax=1
+    " Disable the label indenting rules for C++, since they are like, never used
+    autocmd FileType cpp setlocal cinoptions+=L0
     " Comment a line with \c
     autocmd FileType cpp nnoremap <buffer> <localleader>c 0i//<esc>
     " Uncomment a line with \uc
@@ -459,16 +502,28 @@ augroup CAndCpp
     " Insert an if statement with curly braces when typing iff
     autocmd FileType cpp inoreabbrev <buffer> iff if ()<cr>{<cr>}<up><up><end><left>
     " Insert a basic counter based for loop with curly braces by typing fori
-    autocmd FileType cpp inoreabbrev <buffer> fori for (auto i = 0; i <; ++i)<cr>{<cr>}<up><up><end><left><left><left><left><left><left>
-    " Use doxygen syntax highlighting on top of C++ syntax highlighting
-    autocmd FileType cpp let g:load_doxygen_syntax=1
+    autocmd FileType cpp inoreabbrev <buffer> fori for (std::uint8_t i = 0U; i <; ++i)<cr>{<cr>}<up><up><end><left><left><left><left><left><left>
+    " Insert a case of a switch statement
+    autocmd FileType cpp inoreabbrev <buffer> casee case:<cr><cr>break;<up><up><end><left>
     " Try to be smart (more like foolish) about wrapping things inside of an if with parens
     autocmd FileType cpp nnoremap <buffer> <localleader>( mn?[&\|=<>]<cr>wi(<esc>/[;)]$<cr>i)<esc>`nl:noh<cr>
     " Try to be smart (more like foolish) about wrapping things inside of an if with parens
-    autocmd FileType cpp nnoremap <buffer> <localleader>) mn/[&\|=<>]\<cr>bea)<esc>?[(]<cr>a(<esc>`nl:noh<cr>
+    autocmd FileType cpp nnoremap <buffer> <localleader>) mn/[&\|=<>]<cr>bea)<esc>?[(]<cr>a(<esc>`nl:noh<cr>
     " Swap the statements on either side of the equals sign
     " (the qaq and qsq starting the mapping are to clear out the a and s registers, which are used here)
     autocmd FileType cpp nnoremap <buffer> <localleader>se qaqqsq^"adt=lp"sdt;F=hhp
+    " Open the file under cursor in a vertical split
+    autocmd FileType cpp nnoremap <buffer> <localleader>v :vert wincmd f<cr>
+    " Open the file under cursor in a new tab
+    autocmd FileType cpp nnoremap <buffer> <localleader>o <c-w>gf
+    " Open the h/hpp/c/cpp variant of this file which can be found on the path in a vertical split
+    autocmd FileType cpp nnoremap <buffer> <localleader>s :call OpenSrcHeaderInVert(expand("%"))<cr>
+    " Run the clang_complete compile command and open the quickfix window
+    autocmd FileType cpp nnoremap <buffer> <localleader>m :call g:ClangUpdateQuickFix()<cr>
+    " Create a new file using the header template
+    autocmd FileType cpp nnoremap <buffer> <localleader>nh :exec '0r '.$APPDATA.'\\CppTemplates\\Header.hpp'<cr>
+    " Insert the source code template
+    autocmd FileType cpp nnoremap <buffer> <localleader>ns :exec '0r '.$APPDATA.'\\CppTemplates\\Source.cpp'<cr>
 augroup END
 
 " Autocmds for Python
@@ -483,15 +538,26 @@ augroup END
 
 augroup Xml
     autocmd!
-    autocmd FileType xml setlocal foldmethod=indent foldlevelstart=999 foldminlines=0
+    autocmd FileType xml setlocal foldmethod=indent foldlevelstart=99 foldminlines=0
+augroup END
+
+augroup vim_files
+    autocmd!
+    autocmd FileType vim nnoremap <buffer> <localleader>c 0i"<esc>
+    autocmd FileType vim nnoremap <buffer> <localleader>uc :s!^\(\s*\)"!\1!ge<cr>:noh<cr>
+    autocmd FileType vim vnoremap <buffer> <localleader>c :<c-u>execute "'<,'>s!^!\"!ge"<cr>:nohlsearch<cr>
+    autocmd FileType vim vnoremap <buffer> <localleader>uc :<c-u>execute "'<,'>s!^\"!!ge"<cr>:nohlsearch<cr>
 augroup END
 
 augroup Project
     autocmd!
-    autocmd BufRead proj_files.txt setlocal foldmethod=indent foldlevelstart=999 foldminlines=0
     autocmd BufRead proj_files.txt call ReplaceProjWithListing()
+    autocmd BufRead proj_files.txt call UpdateWithIncludePaths()
+    autocmd BufRead proj_files.txt setlocal foldmethod=indent foldlevelstart=0 foldminlines=0
     autocmd BufRead proj_files.txt nnoremap <buffer> <localleader>o :call OpenProjectFile(line("."))<cr>
-    autocmd BufRead proj_files.txt nnoremap <buffer> <localleader>n :call OpenProjectFileInNextTab(line("."))<cr>
+    autocmd BufRead proj_files.txt nnoremap <buffer> <localleader>v :call OpenProjectFileInNextTab(line("."))<cr>
+    autocmd BufRead proj_files.txt nnoremap <buffer> <localleader>b :call OpenProjectFile(line("."))<cr>call OpenSrcHeaderInVert(expand("%"))<cr>
+
 augroup END
 
 " Create a function to try to read a proj_files.txt and print it prettier in the current buffer
@@ -503,15 +569,21 @@ func! DisplayProjectFiles()
     endif
 
     let lineNr = 0
-    for myfile in projFiles
-        let parts = split(myfile, ossep)
-        let namePart = parts[-1:]
-        let dirPart = join(parts[:-2], ossep)
-        call append(lineNr, namePart)
-        let lineNr = lineNr + 1
-        call append(lineNr, "\t" . dirPart)
+    for line in projFiles
+        " If the line ends with :(G), then write it as is
+        if match(line, "^\s*.*:(G)$") >= 0
+            call append(lineNr, line)
+        " Keep the tabbing, but take the filename from the end and put it up front, then move the path to afterwards and
+        " put it inside of parens
+        else
+            let pattern = "^\\(\\s\\+\\)\\(.*".ossep."\\)\\(.*\\)"
+            let rearranged = substitute(line, pattern, "\\1\\3; (\\2)", "")
+            call append(lineNr, rearranged)
+        endif
+
         let lineNr = lineNr + 1
     endfor
+
     execute "normal! Gdd"
 endfunc
 
@@ -523,53 +595,92 @@ func! ReplaceProjWithListing()
     call DisplayProjectFiles()
 endfunc
 
-func! OpenProjectFile(lineNr)
+func! GetFileName(lineNr)
+    let line = getline(a:lineNr)
+
     let ossep = "/"
     if has("win32")
         let ossep = "\\"
+        let line = substitute(line, ossep, ossep.ossep, "")
     endif
 
-    if a:lineNr%2 == 0
-        let dirName = getline(a:lineNr)
-        let fileName = getline(a:lineNr-1)
-        let dirname = substitute(dirName, "^\s*\(.*\)\s*$", "\1", "")
-        let allTogether = dirName . ossep . fileName
-        execute "tabedit ".allTogether
-    else
-        let dirName = getline(a:lineNr+1)
-        let fileName = getline(a:lineNr)
-        let dirName = substitute(dirName, "[\s*\(.*\)\s*", "\1", "")
-        let allTogether = dirName . ossep . fileName
-        execute "tabedit ".allTogether
-    endif
+    let splitLine = split(line, ";")
+    let fileName = substitute(splitLine[0], "\\s*\\(.*\\)", "\\1", "")
+    let pathName = substitute(splitLine[1], " (\\(.*\\))", "\\1", "")
+    let fileName = pathName.fileName
+
+    return fileName
+endfunc
+
+func! OpenProjectFile(lineNr)
+    execute "tabedit ".GetFileName(a:lineNr)
 endfunc
 
 
 func! OpenProjectFileInNextTab(lineNr)
+    let fileName = GetFileName(a:lineNr)
+    tabnext
+    execute "vsp ".fileName
+endfunc
+
+func! UpdateWithIncludePaths()
     let ossep = "/"
     if has("win32")
         let ossep = "\\"
     endif
 
-    let allTogether = ""
-    if a:lineNr%2 == 0
-        let dirName = getline(a:lineNr)
-        let fileName = getline(a:lineNr-1)
-        let dirname = substitute(dirName, "^\s*\(.*\)\s*$", "\1", "")
-        let allTogether = dirName . ossep . fileName
-    else
-        let dirName = getline(a:lineNr+1)
-        let fileName = getline(a:lineNr)
-        let dirName = substitute(dirName, "[\s*\(.*\)\s*", "\1", "")
-        let allTogether = dirName . ossep . fileName
+    for line in readfile(".clang_complete")
+        let includePath = substitute(line, '-\(I\|isystem \)"\(.*\)"', '\2', '')
+        if includePath != line
+            execute 'set path+='.escape(escape(escape(escape(includePath, ' '), '\ '), '('), ')')
+        endif
+    endfor
+endfunc
+
+func! OpenSrcHeaderInVert(thisFile)
+    let ossep = "/"
+    if has("win32")
+        let ossep = "\\"
     endif
 
-    execute "sp ".allTogether
-    let bufNr = bufnr("%")
-    close
-    tabnext
-    execute "vert sb ".bufNr
+    let justFileName = split(a:thisFile, ossep)[-1:]
+    let fileName = ""
+    let newExts = []
+    for item in split(justFileName[0], "\\.")
+        if item == "h"
+            call add(newExts, "c")
+            call add(newExts, "cpp")
+            break
+        elseif item == "c"
+            call add(newExts, "h")
+            break
+        elseif item == "hpp"
+            call add(newExts, "cpp")
+            break
+        elseif item == "cpp"
+            call add(newExts, "hpp")
+            call add(newExts, "h")
+            break
+        else
+            if fileName == ""
+                let fileName = item
+            else
+                let fileName = fileName . "." . item
+            endif
+        endif
+    endfor
+
+    for ext in newExts
+        let findName = join([fileName, ext], ".")
+        try
+            exe "vert sf ".findName
+            break
+        catch
+            echom "Tried to open ".findName." but failed"
+            continue
+        endtry
+    endfor
+
 endfunc
 
 " Finish off with a :noh
-noh
