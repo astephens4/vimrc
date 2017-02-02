@@ -56,6 +56,10 @@ call vundle#begin('$USERPROFILE/vimfiles/bundle/')
 " Clearcase plugin, but only on the work computer
 if (UsingClearCase != 0)
     Plugin 'ccase.vim'
+
+    " Add some handy shortcuts, such as opening the version tree and diffing with predecessor
+    nnoremap <F6> :Ctxlsv<cr>
+    nnoremap <F7> :Ctpdif<cr>:set ft=cpp<cr><c-w>lgg
 endif
 
 " Plantuml integration
@@ -96,8 +100,9 @@ let g:clang_complete_patterns=1
 let g:clang_complete_copen=1
 let g:clang_user_options='-I..\\inc\\ -std=c++11'
 let g:clang_auto_user_options=".clang_complete"
+
 " Uncomment in case of emergency
-" let g:clang_debug = 1
+let g:clang_debug = 1
 
 " Configuration for supertab
 let g:SuperTabDefaultCompletionType = "<c-x><c-u>"
@@ -233,6 +238,8 @@ set nobackup
 set nowb
 set noswapfile
 
+" Add a command which closes the current file in the buffer and opens a new one
+command! -nargs=+ -complete=file We w | bd | e <args>
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => Text, tab and indent related
@@ -314,17 +321,26 @@ if has("mac") || has("macunix")
   vnoremap <D-k> <M-k>
 endif
 
-" Save my knuckles by using jk to exit insert mode
-inoremap jk <esc>
-
 " Make switching  between multiple buffers better
 nnoremap <c-h> <c-w>h
 nnoremap <c-j> <c-w>j
 nnoremap <c-k> <c-w>k
 nnoremap <c-l> <c-w>l
+inoremap <c-h> <esc><c-w>h
+inoremap <c-j> <esc><c-w>j
+inoremap <c-k> <esc><c-w>k
+inoremap <c-l> <esc><c-w>l
 
 " Map c-space to user defined complete
 inoremap <c-space> <c-x><c-u>
+
+" Map shift-tab to de-tab
+inoremap <S-tab> <c-d>
+vnoremap <tab> >gv
+vnoremap <S-tab> <gv
+nnoremap <tab> >>
+nnoremap <S-tab> <<
+vnoremap <cr> <esc>
 
 " Useful mappings for managing tabs
 nnoremap <leader>tn :tabnew<cr>
@@ -334,7 +350,7 @@ nnoremap <leader>tm :tabmove
 
 " Opens a new tab with the current buffer's path
 " Super useful when editing files in the same directory
-nnoremap <leader>te :tabedit <c-r>=expand("%:p:h")<cr>/
+nnoremap <leader>te :tabedit <c-r>=expand("%:p:h")<cr>\
 
 " Close current buffer, switch tabs, and open buffer as vertical split
 func! MoveToNextTab()
@@ -348,6 +364,7 @@ endfunc
 " Open file under cursor in the next tab as a vertical split
 nnoremap <leader>ot <c-w>gf
 nnoremap <leader>ov :vert wincmd f<cr>:call MoveToNextTab()<cr>
+cnoreabbrev Vfind vert sf
 
 " Switch CWD to the directory of the open buffer
 nnoremap <leader>cd :cd %:p:h<cr>:pwd<cr>
@@ -422,6 +439,7 @@ nnoremap <c-w>f :vert wincmd f<cr>
 
 " Insert the correctly formatted date in insert mode
 inoremap <F3> <C-R>=strftime("%d-%b-%Y")<CR>
+inoremap <F2> <C-R>=$USERNAME<CR><esc>vbuea
 
 " Substitute word under cursor
 nnoremap <leader>s yiw:%s/<c-r>"/
@@ -524,6 +542,10 @@ augroup CAndCpp
     autocmd FileType cpp nnoremap <buffer> <localleader>nh :exec '0r '.$APPDATA.'\\CppTemplates\\Header.hpp'<cr>
     " Insert the source code template
     autocmd FileType cpp nnoremap <buffer> <localleader>ns :exec '0r '.$APPDATA.'\\CppTemplates\\Source.cpp'<cr>
+    " Format the body of a code block
+    autocmd FileType cpp nnoremap <buffer> <localleader>f mm/{<cr><S-v>%=:noh<cr>`m
+    " Count comment header/delimiter thingy lines
+    autocmd FileType cpp nnoremap <buffer> <localleader>cc :%s/^\s*\/\/[\/\*]\{20,117}$//gn<cr>
 augroup END
 
 " Autocmds for Python
