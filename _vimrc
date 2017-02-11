@@ -44,14 +44,20 @@ set nocompatible              " be iMproved, required
 filetype off                  " required
 
 " Load the clearcase plugin
-let UsingClearCase = 1
+let UsingClearCase = 0
 
 " Control bitness
 let NumBits = 32
 
-" set the runtime path to include Vundle and initialize
-set rtp+=$USERPROFILE/vimfiles/bundle/Vundle.vim
-call vundle#begin('$USERPROFILE/vimfiles/bundle/')
+if has("win32")
+    " set the runtime path to include Vundle and initialize
+    set rtp+=$USERPROFILE/vimfiles/bundle/Vundle.vim
+    call vundle#begin('$USERPROFILE/vimfiles/bundle/')
+else
+    " set the runtime path to include Vundle and initialize
+    set rtp+=~/.vim/bundle/Vundle.vim
+    call vundle#begin()
+endif
 
 " Clearcase plugin, but only on the work computer
 if (UsingClearCase != 0)
@@ -61,6 +67,9 @@ if (UsingClearCase != 0)
     nnoremap <F6> :Ctxlsv<cr>
     nnoremap <F7> :Ctpdif<cr>:set ft=cpp<cr><c-w>lgg
 endif
+
+" Let Vundle manage Vundle
+Plugin 'VundleVim/Vundle.vim'
 
 " Plantuml integration
 Plugin 'aklt/plantuml-syntax'
@@ -91,6 +100,13 @@ if has("win32")
 
     " Plantuml integration
     let g:plantuml_executable_script='java -jar '.$APPDATA.'\plantuml.jar'
+else
+    " Specify the clang installation
+    if NumBits == 32
+        let g:clang_library_path='/usr/lib/llvm-3.8/lib'
+    elseif NumBits == 64
+        let g:clang_library_path='/usr/lib64'
+    endif
 endif
 
 " Configuration for clang_complete
@@ -102,7 +118,7 @@ let g:clang_user_options='-I..\\inc\\ -std=c++11'
 let g:clang_auto_user_options=".clang_complete"
 
 " Uncomment in case of emergency
-let g:clang_debug = 1
+" let g:clang_debug = 1
 
 " Configuration for supertab
 let g:SuperTabDefaultCompletionType = "<c-x><c-u>"
@@ -228,7 +244,7 @@ highlight PmenuThumb ctermbg=darkgrey guibg=darkgrey
 set encoding=utf8
 
 " Use DOS as the standard file type
-set ffs=dos,unix,mac
+set ffs=unix,dos,mac
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => Files, backups and undo
@@ -283,10 +299,19 @@ nnoremap <esc>  :noh<return><esc>
 inoremap jk <esc>
 
 " Return to last edit position when opening files (You want this!)
-autocmd BufReadPost *
-     \ if line("'\"") > 0 && line("'\"") <= line("$") |
-     \   exe "normal! g`\"" |
-     \ endif
+func! GoToRecentLine()
+    if line("'\"") > 1 && line("'\"") <= line("$")
+        exe "normal! g`\""
+    endif
+endfunc
+
+" Return to last edit position when opening files (You want this!)
+augroup AllFiles
+    autocmd!
+    autocmd BufEnter * call GoToRecentLine()
+    autocmd BufReadPost * exe "normal! \<cr>"
+augroup END
+
 " Remember info about open buffers on close
 set viminfo^=%
 
@@ -350,7 +375,7 @@ nnoremap <leader>tm :tabmove
 
 " Opens a new tab with the current buffer's path
 " Super useful when editing files in the same directory
-nnoremap <leader>te :tabedit <c-r>=expand("%:p:h")<cr>\
+nnoremap <leader>te :tabedit <c-r>=expand("%:p:h")<cr>/
 
 " Close current buffer, switch tabs, and open buffer as vertical split
 func! MoveToNextTab()
@@ -479,6 +504,8 @@ if has("win32")
     " Add the dirty words... hehehehe
     set dict+=$APPDATA/dict/misc/profane.1
     set dict+=$APPDATA/dict/misc/profane.3
+else
+
 endif
 
 " Pressing ,ss will toggle and untoggle spell checking
@@ -498,7 +525,9 @@ nnoremap <Leader>m mmHmt:%s/<C-V><cr>//ge<cr>'tzt'm
 
 " Turn off the god-damned bells when I press ESC in regular mode
 set noeb vb t_vb=
-au GUIEnter * set vb t_vb=|simalt ~x
+if has('gui_running') && has('win32')
+    au GUIEnter * set vb t_vb=|simalt ~x
+endif
 
 set tags=tags;
 
@@ -706,3 +735,4 @@ func! OpenSrcHeaderInVert(thisFile)
 endfunc
 
 " Finish off with a :noh
+noh
