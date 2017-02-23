@@ -1,45 +1,3 @@
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" Maintainer:
-"       Amir Salihefendic
-"       http://amix.dk - amix@amix.dk
-"
-" Version:
-"       5.0 - 29/05/12 15:43:36
-"
-" Blog_post:
-"       http://amix.dk/blog/post/19691#The-ultimate-Vim-configuration-on-Github
-"
-" Awesome_version:
-"       Get this config, nice color schemes and lots of plugins!
-"
-"       Install the awesome version from:
-"
-"           https://github.com/amix/vimrc
-"
-" Syntax_highlighted:
-"       http://amix.dk/vim/vimrc.html
-"
-" Raw_version:
-"       http://amix.dk/vim/vimrc.txt
-"
-" Sections:
-"    -> General
-"    -> VIM user interface
-"    -> Colors and Fonts
-"    -> Files and backups
-"    -> Text, tab and indent related
-"    -> Visual mode related
-"    -> Moving around, tabs and buffers
-"    -> Status line
-"    -> Editing mappings
-"    -> vimgrep searching and cope displaying
-"    -> Spell checking
-"    -> Misc
-"    -> Helper functions
-"
-"
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-
 set nocompatible              " be iMproved, required
 filetype off                  " required
 
@@ -59,6 +17,18 @@ else
     call vundle#begin()
 endif
 
+" Let Vundle manage Vundle
+Plugin 'VundleVim/Vundle.vim'
+
+" Best window swapper
+Plugin 'wesQ3/vim-windowswap'
+
+" Clang based code completion for C++
+Plugin 'Rip-Rip/clang_complete'
+
+" Tab completion, for better auto complete
+Plugin 'ervandew/supertab'
+
 " Clearcase plugin, but only on the work computer
 if (UsingClearCase != 0)
     Plugin 'ccase.vim'
@@ -67,24 +37,6 @@ if (UsingClearCase != 0)
     nnoremap <F6> :Ctxlsv<cr>
     nnoremap <F7> :Ctpdif<cr>:set ft=cpp<cr><c-w>lgg
 endif
-
-" Let Vundle manage Vundle
-Plugin 'VundleVim/Vundle.vim'
-
-" Plantuml integration
-Plugin 'aklt/plantuml-syntax'
-
-" Best window swapper
-Plugin 'wesQ3/vim-windowswap'
-
-" Clang based code completion for C++
-Plugin 'Rip-Rip/clang_complete'
-
-" Python autocomplete plugin
-Plugin 'davidhalter/jedi-vim'
-
-" Tab completion, for better auto complete
-Plugin 'ervandew/supertab'
 
 " All of your Plugins must be added before the following line
 call vundle#end()            " required
@@ -110,17 +62,17 @@ else
 endif
 
 " Configuration for clang_complete
+let g:clang_use_library=1
 let g:clang_auto_select=1
 let g:clang_complete_macros=1
 let g:clang_complete_patterns=1
 let g:clang_complete_copen=1
-let g:clang_user_options='-I..\\inc\\ -std=c++11'
+let g:clang_user_options='-std=c++11'
 let g:clang_auto_user_options=".clang_complete"
 
 " Uncomment in case of emergency
-" let g:clang_debug = 1
+"let g:clang_debug = 1
 
-" Configuration for supertab
 let g:SuperTabDefaultCompletionType = "<c-x><c-u>"
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -128,14 +80,6 @@ let g:SuperTabDefaultCompletionType = "<c-x><c-u>"
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Sets how many lines of history VIM has to remember
 set history=700
-
-" Enable filetype plugins
-filetype plugin on
-filetype indent on
-set nocp
-
-" Set to auto read when a file is changed from the outside
-set autoread
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => VIM user interface
@@ -192,6 +136,18 @@ set novisualbell
 set t_vb=
 set tm=500
 
+" Set utf8 as standard encoding and en_US as the standard language
+set encoding=utf8
+
+" Use DOS as the standard file type
+set ffs=unix,dos,mac
+
+" Uncomment the following to have Vim jump to the last position when
+" reopening a file
+if has("autocmd")
+  au BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g'\"" | endif
+endif
+
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => Colors and Fonts
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -240,12 +196,6 @@ highlight PmenuSel ctermbg=LightGrey ctermfg=Black guibg=LightGrey guifg=Black
 highlight PmenuSbar ctermbg=LightGrey guibg=LightGrey
 highlight PmenuThumb ctermbg=darkgrey guibg=darkgrey
 
-" Set utf8 as standard encoding and en_US as the standard language
-set encoding=utf8
-
-" Use DOS as the standard file type
-set ffs=unix,dos,mac
-
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => Files, backups and undo
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -272,14 +222,11 @@ set tabstop=4
 
 " Linebreak on 500 characters
 set lbr
-set tw=500
+set tw=120
 
 set ai "Auto indent
 set si "Smart indent
 set wrap "Wrap lines
-
-" Open new vertical splits on the right, because that is better
-"set splitleft
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => Moving around, tabs, windows and buffers
@@ -291,26 +238,6 @@ try
   set stal=2
 catch
 endtry
-
-" Clear search highlights by pressing escape
-nnoremap <esc>  :noh<return><esc>
-
-" Map jk to esc in order to save my knuckles
-inoremap jk <esc>
-
-" Return to last edit position when opening files (You want this!)
-func! GoToRecentLine()
-    if line("'\"") > 1 && line("'\"") <= line("$")
-        exe "normal! g`\""
-    endif
-endfunc
-
-" Return to last edit position when opening files (You want this!)
-augroup AllFiles
-    autocmd!
-    autocmd BufEnter * call GoToRecentLine()
-    autocmd BufReadPost * exe "normal! \<cr>"
-augroup END
 
 " Remember info about open buffers on close
 set viminfo^=%
@@ -328,10 +255,18 @@ set statusline=%F%m%r%h\ %w\ \ \ Line:\ %l\ \ Col:\ %c
 " => Editing mappings
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Before jumping into my epic mappings, lets define a leader
-:let mapleader = " "
-:let maplocalleader = "\\"
+let mapleader = " "
+let maplocalleader = "\\"
 
-" Start adding my epic mappings here
+" Map jk to esc in order to save my knuckles
+inoremap jk <esc>
+
+" Make some cool mappings for home, end, pgup and pgdown
+noremap <leader>h ^
+nnoremap <leader>l $
+vnoremap <leader>l $h
+noremap <leader>j <PageDown>
+noremap <leader>k <PageUp>
 
 " Move a line of text using ALT+[jk] or Comamnd+[jk] on mac
 nnoremap <M-j> mz:m+<cr>`z
@@ -391,47 +326,15 @@ nnoremap <leader>ot <c-w>gf
 nnoremap <leader>ov :vert wincmd f<cr>:call MoveToNextTab()<cr>
 cnoreabbrev Vfind vert sf
 
-" Switch CWD to the directory of the open buffer
-nnoremap <leader>cd :cd %:p:h<cr>:pwd<cr>
-
 " I like the leader w mapping to write
 nnoremap <leader>w :w!<return>
-
-" Make backspace reasonable
-set backspace=eol,start,indent
-set whichwrap+=<,>,h,l
-
-" Make some cool mappings for home, end, pgup and pgdown
-noremap <leader>h ^
-nnoremap <leader>l $
-vnoremap <leader>l $h
-noremap <leader>j <PageDown>
-noremap <leader>k <PageUp>
 
 " Make a quick edit to my vimrc and reload
 nnoremap <leader>ev :vsp $MYVIMRC<cr>
 nnoremap <leader>sv :so $MYVIMRC<cr>
 nnoremap <leader>tv :tabedit $MYVIMRC<cr>
 
-" Operator to select word under cursor
-onoremap u :<c-u>normal! bve<cr>
-onoremap U :<c-u>normal! BvE<cr>
-
-" Surround words with different characters
-nnoremap    <leader>(   mnBi(<esc>Ea)<esc>`nl
-nnoremap    <leader>{   mnBi{<esc>Ea}<esc>`nl
-nnoremap    <leader>[   mnBi[<esc>Ea]<esc>`nl
-nnoremap    <leader><   mnBi<<esc>Ea><esc>`nl
-nnoremap    <leader>"   mnBi"<esc>Ea"<esc>`nl
-nnoremap    <leader>'   mnBi'<esc>Ea'<esc>`nl
-nnoremap    <leader>ds  mnBhxEx`nh
-nnoremap    <leader>d)  mnF(ma%x`ax`nh
-nnoremap    <leader>d(  mnf)ma%x`ahx`nl
-nnoremap    <leader>d}  mnF{ma%x`ax`nh
-nnoremap    <leader>d{  mnf}ma%x`ahx`nl
-nnoremap    <leader>d]  mnF[ma%x`ax`nh
-nnoremap    <leader>d[  mnf]ma%x`ahx`nl
-
+" Surround the visual selection with stuff
 vnoremap    <leader>(   <esc>`<i(<esc>`>la)<esc>
 vnoremap    <leader>{   <esc>`<i{<esc>`>la}<esc>
 vnoremap    <leader>[   <esc>`<i[<esc>`>la]<esc>
@@ -440,16 +343,12 @@ vnoremap    <leader>'   <esc>`<i'<esc>`>la'<esc>
 vnoremap    <leader>"   <esc>`<i"<esc>`>la"<esc>
 vnoremap    <leader>ds  <esc>`<mn`>x`nx
 
-" Extend the line with the last character out to 120 columns
-nnoremap    <leader>ec <end>vy120p<esc>d120\|^<cr>
+" Extend the line with the last character out to 80 columns
+nnoremap    <leader>ec <end>vy120p<esc>d80\|^<cr>
 
 " Go to the last character in the file
 nnoremap G   G<End>
 vnoremap G   G<End>
-
-" Map double click to highlight all occurrences of the word under cursor
-nnoremap <2-LeftMouse>  *#
-inoremap <2-LeftMouse>  <c-o>*<c-o>#
 
 " Insert and append a single character in normal mode
 nnoremap <leader>i  vyphr
@@ -505,7 +404,7 @@ if has("win32")
     set dict+=$APPDATA/dict/misc/profane.1
     set dict+=$APPDATA/dict/misc/profane.3
 else
-
+    set dict+=/usr/share/dict/words
 endif
 
 " Pressing ,ss will toggle and untoggle spell checking
@@ -523,14 +422,9 @@ nnoremap <leader>s? z=
 " Remove the Windows ^M - when the encodings gets messed up
 nnoremap <Leader>m mmHmt:%s/<C-V><cr>//ge<cr>'tzt'm
 
-" Turn off the god-damned bells when I press ESC in regular mode
-set noeb vb t_vb=
-if has('gui_running') && has('win32')
-    au GUIEnter * set vb t_vb=|simalt ~x
-endif
-
-set tags=tags;
-
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" => File Specific Mappings
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Autocmds for C and C++
 augroup CAndCpp
     autocmd!
@@ -608,7 +502,6 @@ augroup Project
     autocmd BufRead proj_files.txt nnoremap <buffer> <localleader>o :call OpenProjectFile(line("."))<cr>
     autocmd BufRead proj_files.txt nnoremap <buffer> <localleader>v :call OpenProjectFileInNextTab(line("."))<cr>
     autocmd BufRead proj_files.txt nnoremap <buffer> <localleader>b :call OpenProjectFile(line("."))<cr>call OpenSrcHeaderInVert(expand("%"))<cr>
-
 augroup END
 
 " Create a function to try to read a proj_files.txt and print it prettier in the current buffer
