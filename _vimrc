@@ -55,7 +55,7 @@ if has("win32")
 else
     " Specify the clang installation
     if NumBits == 32
-        let g:clang_library_path='/usr/lib/llvm-3.8/lib'
+        let g:clang_library_path='/usr/lib/llvm-3.9/lib'
     elseif NumBits == 64
         let g:clang_library_path='/usr/lib64'
     endif
@@ -343,8 +343,8 @@ vnoremap    <leader>'   <esc>`<i'<esc>`>la'<esc>
 vnoremap    <leader>"   <esc>`<i"<esc>`>la"<esc>
 vnoremap    <leader>ds  <esc>`<mn`>x`nx
 
-" Extend the line with the last character out to 80 columns
-nnoremap    <leader>ec <end>vy120p<esc>d80\|^<cr>
+" Extend the line with the last character out to 120 columns
+nnoremap    <leader>ec <end>vy120p<esc>d120\|^<cr>
 
 " Go to the last character in the file
 nnoremap G   G<End>
@@ -430,8 +430,16 @@ augroup CAndCpp
     autocmd!
     " Use doxygen syntax highlighting on top of C++ syntax highlighting
     autocmd BufReadPre cpp let g:load_doxygen_syntax=1
-    " Disable the label indenting rules for C++, since they are like, never used
-    autocmd FileType cpp setlocal cinoptions+=L0
+    " Do not indent goto labels
+    autocmd FileType cpp setlocal cinoptions+=Ls
+    " Do not indent inside of a namespace
+    autocmd FileType cpp setlocal cinoptions+=N-s
+    " Do not indent cases inside of a switch
+    autocmd FileType cpp setlocal cinoptions+=:0
+    " Align the insides of a case label with the case lable
+    autocmd FileType cpp setlocal cinoptions+=l1
+    " Make the class scope declarations at the same indentation level as the class
+    autocmd FileType cpp setlocal cinoptions+=g0
     " Comment a line with \c
     autocmd FileType cpp nnoremap <buffer> <localleader>c 0i//<esc>
     " Uncomment a line with \uc
@@ -474,6 +482,7 @@ augroup END
 " Autocmds for Python
 augroup Python
     autocmd!
+    autocmd FileType python setlocal cindent
     autocmd FileType python nnoremap <buffer> <localleader>c 0i#<esc>
     autocmd FileType python nnoremap <buffer> <localleader>uc :s!^\(\s*\)#!\1!ge<cr>:nohlsearch<cr>
     autocmd FileType python vnoremap <buffer> <localleader>c :<c-u>execute "'<,'>s!^!#!ge"<cr>:nohlsearch<cr>
