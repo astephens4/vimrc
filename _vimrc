@@ -29,6 +29,12 @@ Plugin 'Rip-Rip/clang_complete'
 " Tab completion, for better auto complete
 Plugin 'ervandew/supertab'
 
+" Get a better light color theme
+Plugin 'NLKNguyen/papercolor-theme'
+
+" Python development support
+Plugin 'davidhalter/jedi-vim'
+
 " Clearcase plugin, but only on the work computer
 if (UsingClearCase != 0)
     Plugin 'ccase.vim'
@@ -73,7 +79,7 @@ let g:clang_auto_user_options=".clang_complete"
 " Uncomment in case of emergency
 "let g:clang_debug = 1
 
-let g:SuperTabDefaultCompletionType = "<c-x><c-u>"
+let g:SuperTabDefaultCompletionType = 'context'
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => General
@@ -154,8 +160,8 @@ endif
 " Enable syntax highlighting
 syntax enable
 
-colorscheme desert
-set background=dark
+set background=light
+colorscheme PaperColor
 
 if has("gui_running")
     " Let visual selection use the clipboard automatically
@@ -343,8 +349,27 @@ vnoremap    <leader>'   <esc>`<i'<esc>`>la'<esc>
 vnoremap    <leader>"   <esc>`<i"<esc>`>la"<esc>
 vnoremap    <leader>ds  <esc>`<mn`>x`nx
 
-" Extend the line with the last character out to 120 columns
-nnoremap    <leader>ec <end>vy120p<esc>d120\|^<cr>
+" Auto complete []{}() pairs
+inoremap { {}<left>
+inoremap {<cr> {<cr>}<up><end>
+inoremap {{ {
+inoremap {} {}
+inoremap <expr> } strpart(getline('.'), col('.')-1, 1) == "}" ? "\<right>" : "}"
+
+inoremap ( ()<left>
+inoremap <expr> ) strpart(getline('.'), col('.')-1, 1) == ")" ? "\<right>" : ")"
+
+inoremap [ []<left>
+inoremap <expr> ] strpart(getline('.'), col('.')-1, 1) == "]" ? "\<right>" : "]"
+
+inoremap ' ''<left>
+inoremap <expr> ' strpart(getline('.'), col('.')-1, 1) == "'" ? "\<right>" : "'"
+
+inoremap " ""<left>
+inoremap <expr> " strpart(getline('.'), col('.')-1, 1) == "\"" ? "\<right>" : "\""
+
+" Extend the line with the last character out to 80 columns
+nnoremap    <leader>ec <end>vy120p<esc>d80\|^<cr>
 
 " Go to the last character in the file
 nnoremap G   G<End>
@@ -428,6 +453,10 @@ nnoremap <Leader>m mmHmt:%s/<C-V><cr>//ge<cr>'tzt'm
 " Autocmds for C and C++
 augroup CAndCpp
     autocmd!
+    autocmd FileType cpp
+        \ if &omnifunc != '' |
+        \   call SuperTabChain(&omnifunc, '<c-p>') |
+        \ endif
     " Use doxygen syntax highlighting on top of C++ syntax highlighting
     autocmd BufReadPre cpp let g:load_doxygen_syntax=1
     " Do not indent goto labels
@@ -487,7 +516,9 @@ augroup Python
     autocmd FileType python nnoremap <buffer> <localleader>uc :s!^\(\s*\)#!\1!ge<cr>:nohlsearch<cr>
     autocmd FileType python vnoremap <buffer> <localleader>c :<c-u>execute "'<,'>s!^!#!ge"<cr>:nohlsearch<cr>
     autocmd FileType python vnoremap <buffer> <localleader>uc :<c-u>execute "'<,'>s!^#!!ge"<cr>:nohlsearch<cr>
-    autocmd FileType python :iabbrev <buffer> iff if:<left>
+    autocmd FileType python inoreabbrev <buffer> iff if:<left>
+    autocmd FileType python inoreabbrev <buffer> class class:<left>
+    autocmd FileType python setlocal cindent
 augroup END
 
 augroup Xml
