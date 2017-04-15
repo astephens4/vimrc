@@ -35,6 +35,14 @@ Plugin 'NLKNguyen/papercolor-theme'
 " Python development support
 Plugin 'davidhalter/jedi-vim'
 
+Plugin 'Lokaltog/powerline'
+Plugin 'powerline/powerline-fonts'
+
+" The mandatory tpope plugins
+Plugin 'tpope/vim-surround'
+Plugin 'tpope/vim-repeat'
+Plugin 'tpope/vim-fugitive'
+
 " Clearcase plugin, but only on the work computer
 if (UsingClearCase != 0)
     Plugin 'ccase.vim'
@@ -143,10 +151,10 @@ set t_vb=
 set tm=500
 
 " Set utf8 as standard encoding and en_US as the standard language
-set encoding=utf8
+set encoding=utf-8
 
 " Use DOS as the standard file type
-set ffs=unix,dos,mac
+set ffs=dos,unix,mac
 
 " Uncomment the following to have Vim jump to the last position when
 " reopening a file
@@ -176,6 +184,7 @@ if has("gui_running")
     " Show a horizontal scroll line
     set guioptions+=b
     set guioptions+=h
+    set guioptions-=L
 
     " Support 256 colors
     set t_Co=256
@@ -187,8 +196,11 @@ if has("gui_running")
     if has("gui_gtk2")
         set guifont=DejaVu\ Sans\ Mono\ 9
     elseif has("gui_win32")
-        set guifont=DejaVu\ Sans\ Mono:h9
+        set guifont=DejaVu\ Sans\ Mono\ for\ Powerline:h9
     endif
+
+    " Disable the bells, again
+    autocmd GUIEnter * set vb t_vb=
 
     " When resizing the GUI, make all of the split buffers equal in size
     au VimResized * wincmd =
@@ -253,9 +265,12 @@ set viminfo^=%
 """"""""""""""""""""""""""""""
 " Always show the status line
 set laststatus=2
+python3 from powerline.vim import setup as powerline_setup
+python3 powerline_setup()
+python3 del powerline_setup
 
 " Format the status line
-set statusline=%F%m%r%h\ %w\ \ \ Line:\ %l\ \ Col:\ %c
+"set statusline=%F%m%r%h\ %w\ \ \ Line:\ %l\ \ Col:\ %c
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => Editing mappings
