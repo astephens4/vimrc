@@ -541,17 +541,17 @@ augroup END
 
 augroup Project
     autocmd!
-    autocmd BufRead proj_files.txt call ReplaceProjWithListing()
-    autocmd BufRead proj_files.txt call UpdateWithIncludePaths()
-    autocmd BufRead proj_files.txt setlocal foldmethod=indent foldlevelstart=0 foldminlines=0
-    autocmd BufRead proj_files.txt nnoremap <buffer> <localleader>o :call OpenProjectFile(line("."))<cr>
-    autocmd BufRead proj_files.txt nnoremap <buffer> <localleader>v :call OpenProjectFileInNextTab(line("."))<cr>
-    autocmd BufRead proj_files.txt nnoremap <buffer> <localleader>b :call OpenProjectFile(line("."))<cr>call OpenSrcHeaderInVert(expand("%"))<cr>
+    autocmd BufRead .vimproj call ReplaceProjWithListing()
+    autocmd BufRead .vimproj call UpdateWithIncludePaths()
+    autocmd BufRead .vimproj setlocal foldmethod=indent foldlevelstart=0 foldminlines=0
+    autocmd BufRead .vimproj nnoremap <buffer> <localleader>o :call OpenProjectFile(line("."))<cr>
+    autocmd BufRead .vimproj nnoremap <buffer> <localleader>v :call OpenProjectFileInNextTab(line("."))<cr>
+    autocmd BufRead .vimproj nnoremap <buffer> <localleader>b :call OpenProjectFile(line("."))<cr>call OpenSrcHeaderInVert(expand("%"))<cr>
 augroup END
 
-" Create a function to try to read a proj_files.txt and print it prettier in the current buffer
+" Create a function to try to read a .vimproj and print it prettier in the current buffer
 func! DisplayProjectFiles()
-    let projFiles = readfile("./proj_files.txt")
+    let projFiles = readfile("./.vimproj")
     let ossep = '/'
     if has("win32")
         let ossep = '\\'
