@@ -5,7 +5,7 @@ filetype off                  " required
 let UsingClearCase = 0
 
 " Control bitness
-let NumBits = 32
+let NumBits = 64
 
 if has("win32")
     " set the runtime path to include Vundle and initialize
@@ -35,9 +35,6 @@ Plugin 'NLKNguyen/papercolor-theme'
 " Python development support
 Plugin 'davidhalter/jedi-vim'
 
-Plugin 'Lokaltog/powerline'
-Plugin 'powerline/powerline-fonts'
-
 " The mandatory tpope plugins
 Plugin 'tpope/vim-surround'
 Plugin 'tpope/vim-repeat'
@@ -66,13 +63,6 @@ if has("win32")
 
     " Plantuml integration
     let g:plantuml_executable_script='java -jar '.$APPDATA.'\plantuml.jar'
-else
-    " Specify the clang installation
-    if NumBits == 32
-        let g:clang_library_path='/usr/lib/llvm-3.9/lib'
-    elseif NumBits == 64
-        let g:clang_library_path='/usr/lib64'
-    endif
 endif
 
 " Configuration for clang_complete
@@ -154,7 +144,11 @@ set tm=500
 set encoding=utf-8
 
 " Use DOS as the standard file type
-set ffs=dos,unix,mac
+if has("win32")
+    set ffs=dos,unix,mac
+else
+    set ffs=unix,mac,dos
+endif
 
 " Uncomment the following to have Vim jump to the last position when
 " reopening a file
@@ -265,12 +259,8 @@ set viminfo^=%
 """"""""""""""""""""""""""""""
 " Always show the status line
 set laststatus=2
-python3 from powerline.vim import setup as powerline_setup
-python3 powerline_setup()
-python3 del powerline_setup
-
 " Format the status line
-"set statusline=%F%m%r%h\ %w\ \ \ Line:\ %l\ \ Col:\ %c
+set statusline=%F%m%r%h\ %w\ \ \ Line:\ %l\ \ Col:\ %c
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => Editing mappings
